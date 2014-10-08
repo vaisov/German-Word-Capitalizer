@@ -2,7 +2,7 @@
 #-*- coding: utf8 -*-
 
 from nltk.tag.stanford import POSTagger, NERTagger
-import sys, getopt, argparse
+import sys, getopt, argparse, tempfile, os
 
 # POSTagger settings
 model = '/opt/stanford-postagger/models/german-fast-caseless.tagger'
@@ -25,27 +25,25 @@ sentences = open(str(args.input)).read()
 
 # Tagging content
 output_st = st.tag(sentences.split())
-output_nt = nt.tag(w=)
 
 text = ""
 
 # Capitalizing words. Tag table: http://www.ims.uni-stuttgart.de/forschung/ressourcen/lexika/TagSets/stts-table.html
 
-with open(args.output,'w') as f:
+with tempfile.NamedTemporaryFile(delete=False) as f, open(args.output,'w') as o:
     for i in output_st:
         w, t = i
         if (t == "NN" or t == "NE" or t == "XY" or t == "ADJD"):
             f.write((w.capitalize()+' ').encode('utf-8'))
         else:
             f.write((w+' ').encode('utf-8'))
-
-#with open(args.output,'w') as f:
-#    for i in sentences:
-#        if (t == "NN" or t == "NE" or t == "XY" or t == "ADJD"):
-#            f.write((w.capitalize()+' ').encode('utf-8'))
-#        else:
-#            f.write((w+' ').encode('utf-8'))
-for i in output_nt:
-    w, t = i
-    if i != ('O').decode('utf-8'):
-        print i
+    f.flush()
+    sentences = open(str(f.name)).read()
+    output_nt = nt.tag(sentences.split())
+    for i in output_nt:
+        w, t = i
+        if t != ('O').decode('utf-8'):
+            o.write((w.capitalize()+' ').encode('utf-8'))
+        else:
+            o.write((w+' ').encode('utf-8'))
+    os.remove(f.name)
